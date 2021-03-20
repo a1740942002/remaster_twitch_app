@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/style.css">
+  <title>My Twitch App</title>
+</head>
+<body class="bg-gray-900 text-white">
+  <main>
+    <section class="py-4 my-16">
+      <div class="w-10/12 md:w-10/12 mx-auto container">
+        <h1 class="font-bold text-center text-3xl md:text-5xl mb-4">My Twitch App</h1> 
+        <div id="streams" class="row space-y-16 md:space-y-12 md:flex md:flex-wrap">
+        </div>
+      </div>
+    </section>
+  </main>
+<script>
+
+// Global Variable
+const container = document.querySelector('#streams');
+const state = {};
+const pages = [];
+
+
+// 監聽滾軸到底部
+window.addEventListener('scroll', function(e){
+  const scrollTop = window.scrollY;
+  const windowHeight = window.innerHeight;
+  const documentHeight = document.documentElement.offsetHeight;
+  if(scrollTop + windowHeight + 1 >= documentHeight){
+    state.isBottom = true;
+  } else {
+    state.isBottom = false;
+  }
+})
+
+// 無限滾軸
+Object.defineProperty(state, 'isBottom', {
+  get: function(){
+    return isBottom;
+  },
+  set: function(value){
+    isBottom = value;
+    if(!isBottom) return;
+    // 當到底部時，新增新的 Streams
+    addStreams();
+  }
+})
+
+
+// 新建 Stream
+function initStreams(){
+  let queryString = '?language=zh';
+
+  getStreams(queryString, function(streams){
+    streams.forEach(stream => { queryString += '&id=' + stream.user_id})
+
+    getUsers(queryString, function(users){
+      streams.forEach(stream => {
+        users.forEach(user => {
+          if(stream.user_id === user.id){
+            stream.profile_image_url = user.profile_image_url
+            stream.offline_image_url = user.offline_image_url
+          }
+        })
+      })
+      render(streams);
+    });
+  });
+}
+
+function addStreams(){
+  let queryString = `?after=${pages[pages.length - 1]}`;
+
+  getStreams(queryString, function(streams){
+    streams.forEach(stream => { queryString += '&id=' + stream.user_id})
+
+    getUsers(queryString, function(users){
+      streams.forEach(stream => {
+        users.forEach(user => {
+          if(stream.user_id === user.id){
+            stream.profile_image_url = user.profile_image_url
+            stream.offline_image_url = user.offline_image_url
+          }
+        })
+      })
+      render(streams);
+    });
+  });
+}
+
+
+// API
+
+function getStreams(queryString, callback){
+  const api = 'https://api.twitch.tv/helix/streams';
+  const clientID = 'kfwda6tzypba70e78x0fbntpnm59fc'; // Twitch 官網註冊
+  const appToken = '35spin2autlycym825e63wr6990lzs'; // 註冊之後發 POST 取得 app access token
+  const request = new XMLHttpRequest();
+  request.open('GET', api + queryString, true);
+  request.setRequestHeader('Authorization', 'Bearer ' + appToken);
+  request.setRequestHeader('Client-Id', clientID);
+  request.send();
+  request.onload = function(e){
+    const results = JSON.parse(request.response).data;
+    const page = JSON.parse(request.response).pagination.cursor;
+    pages.push(page);
+    callback(results);
+  }
+}
+
+function getUsers(queryString, callback){
+  const api = 'https://api.twitch.tv/helix/users';
+  const clientID = 'kfwda6tzypba70e78x0fbntpnm59fc'; // Twitch 官網註冊
+  const appToken = '35spin2autlycym825e63wr6990lzs'; // 註冊之後發 POST 取得 app access token
+  const request = new XMLHttpRequest();
+  request.open('GET', api + queryString, true);
+  request.setRequestHeader('Authorization', 'Bearer ' + appToken);
+  request.setRequestHeader('Client-Id', clientID);
+  request.send();
+  request.onload = function(e){
+    const results = JSON.parse(request.response).data;
+    callback(results);
+  }
+}
+
+// 渲染
+function render(datas){
+  datas.forEach(function(data){
+    const div = document.createElement('div');
+    div.classList.add('block','col', 'md:px-4', 'md:mt-12', 'md:w-4/12', 'transition', 'duration-500', 'ease-in-out', 'transform', 'hover:-translate-y-1', 'hover:scale-105');
+    const thumbnaillURL = data.thumbnail_url.replace('{width}x{height}', '640x360');
+    const html = `
+    <a href="https://www.twitch.tv/${data.user_login}" target="_blank">
+      <div class="row relative md:h-48">
+        <img class="absolute top-0 left-0 right-0 bottom-0 opacity-0 rounded" src="${thumbnaillURL}" onload="this.classList.remove('opacity-0');" alt="">
+        <img class="rounded" src="https://via.placeholder.com/1024x576.jpg" alt="">
+      </div>
+      <div class="flex row rounded items-center space-x-1 bg-gray-800 pr-4 pl-0 py-4">
+        <div class="col relative w-2/12">
+          <img class="w-12 md:w-12 rounded-full mx-auto" src="https://via.placeholder.com/150x150.jpg" alt="">
+          <img class="opacity-0 absolute top-0 left-0 right-0 bottom-0 w-12 md:w-12 rounded-full mx-auto" onload="this.classList.remove('opacity-0');" src="${data.profile_image_url}" alt="">
+        </div>
+        <div class="space-y-2 w-10/12 col">
+          <p class="truncate text-xl md:text-sm text-gray-100">${data.title}</p>
+          <div class="text-md md:text-sm text-gray-100 flex justify-between">
+            <span class="text-gray-400">${data.user_name}</span> 
+            <span class="">
+              <svg class="h-4 w-4 inline-block mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+              </svg>
+              ${data.viewer_count}
+            </span>
+          </div>
+        </div>
+      </div>
+    </a>
+    `
+    div.innerHTML = html;
+    container.appendChild(div);
+  })
+}
+
+
+// 初始化
+initStreams();
+
+</script>
+</body>
+</html>
