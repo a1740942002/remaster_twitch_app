@@ -23,10 +23,8 @@ twitch.getStreams('zh')
 .then(res => {
   model.users = res.data;
   model.streams.forEach( stream => {
-    model.users.forEach( user => {
-      if( stream.user_id !== user.id) return
-      stream.profile_image_url = user.profile_image_url
-    })
+    const user = model.users.find( user => stream.user_id !== user.id);
+    stream.profile_image_url = user.profile_image_url
   })
   view.renderStreams(model.streams);
 })
