@@ -11,7 +11,7 @@ class View{
       li.classList.add('block','col', 'md:px-4', 'md:mt-12', 'md:w-4/12', 'transition', 'duration-500', 'ease-in-out', 'transform', 'hover:-translate-y-1', 'hover:scale-105');
       const html = `
         <a href="https://www.twitch.tv/${stream.user_login}" target="_blank">
-          <div class="row relative md:h-48">
+          <div class="row relative">
             <img class="absolute top-0 left-0 right-0 bottom-0 opacity-0 rounded" src="${stream.thumbnail_url}" onload="this.classList.remove('opacity-0');" alt="">
             <img class="rounded" src="https://via.placeholder.com/1024x576.jpg" alt="">
           </div>

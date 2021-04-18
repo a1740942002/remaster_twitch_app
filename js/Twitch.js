@@ -2,7 +2,7 @@ class Twitch {
   constructor(){
     this.api = 'https://api.twitch.tv/helix/';
     this.clientID = 'kfwda6tzypba70e78x0fbntpnm59fc';
-    this.appToken = '35spin2autlycym825e63wr6990lzs';
+    this.appToken = '50okc879939m0v6bs7i8rtpn3aonmt';
   }
 
   async getStreams(language, pagination){
